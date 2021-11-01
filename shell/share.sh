@@ -167,6 +167,12 @@ fix_config() {
         echo
     fi
 
+    if [ ! -f $list_crontab_user ]; then
+        echo -e "检测到config配置目录下不存在crontab.list, 为了兼容性测试，创建此文件...\n"
+        touch $list_crontab_user
+        echo
+    fi
+
     if [ ! -f $file_task_before ]; then
         echo -e "复制一份 $file_task_sample 为 $file_task_before\n"
         cp -fv $file_task_sample $file_task_before
