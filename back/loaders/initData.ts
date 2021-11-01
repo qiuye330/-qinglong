@@ -5,11 +5,13 @@ import { Crontab, CrontabStatus } from '../data/cron';
 import CronService from '../services/cron';
 import EnvService from '../services/env';
 import _ from 'lodash';
+import ScheduleService from '../services/schedule';
 
 export default async () => {
   const cronService = Container.get(CronService);
   const envService = Container.get(EnvService);
   const dependenceService = Container.get(DependenceService);
+  const scheduleService = Container.get(ScheduleService);
   const cronDb = cronService.getDb();
   const envDb = envService.getDb();
   const dependenceDb = dependenceService.getDb();
@@ -64,16 +66,23 @@ export default async () => {
           { _id: { $in: ids } },
           { $set: { status: CrontabStatus.idle, isDisabled: 1 } },
           { multi: true },
-          (err) => {
-            cronService.autosave_crontab();
-          },
+          (err) => {},
         );
       }
     });
 
   // 初始化保存一次ck和定时任务数据
-  await cronService.autosave_crontab();
   await envService.set_envs();
+  cronDb
+    .find({
+      isDisabled: { $ne: 1 },
+    })
+    .exec(async (err, docs) => {
+      for (const doc of docs) {
+        await scheduleService.cancelSchedule(doc);
+        await scheduleService.generateSchedule(doc);
+      }
+    });
 };
 
 function randomSchedule(from: number, to: number) {
