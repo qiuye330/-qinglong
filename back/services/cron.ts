@@ -334,7 +334,6 @@ export default class CronService {
         async (err, num, docs: any) => {
           for (const doc of docs) {
             await this.scheduleService.cancelSchedule(doc);
-            await this.scheduleService.generateSchedule(doc);
           }
           resolve();
         },
